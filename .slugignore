@@ -2,8 +2,9 @@
 *.psd
 *.pdf
 *.jpg
+/static/image/*.jpg
 efficientnetb2_dense_1.h5
 efficientnetb2_flatten_1.h5
-
+/models
 /test
 /spec
