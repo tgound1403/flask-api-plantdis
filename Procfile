@@ -1,1 +1,1 @@
-web: flask run
+web: heroku ps:scale web=1
