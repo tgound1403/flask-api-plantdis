@@ -1,8 +1,8 @@
 tensorflow==1.14.0
 keras~=2.3.1
 keras_efficientnets
-# numpy==1.16.0
-numpy == 1.21.6
+numpy==1.16.0
+# numpy == 1.21.6
 
 # 
 # appdirs==1.4.4
