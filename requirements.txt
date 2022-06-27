@@ -54,4 +54,4 @@ Werkzeug==2.1.1
 
 protobuf==3.20.*
 pandas==1.1.5
-opencv==4.5.5.64
+opencv-python==4.5.5.64
