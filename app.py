@@ -32,6 +32,10 @@ app = Flask(__name__)
 
 cors = CORS(app)
 
+@app.route("/")
+def home_view():
+        return "<h1>Flask API for Plant Disease</h1>"
+
 
 @app.after_request
 def after_request(response):
