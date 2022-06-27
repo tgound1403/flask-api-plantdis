@@ -24,7 +24,6 @@ from pprint import pprint
 from keras.utils.generic_utils import get_custom_objects
 from keras_efficientnets import EfficientNetB2
 import tensorflow as tf
-import cv2
 from sklearn.metrics.pairwise import cosine_similarity
 
 import werkzeug
