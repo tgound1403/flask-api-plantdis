@@ -171,14 +171,10 @@ def predictcrop():
             form_values = request.form.to_dict()
             column_names = ["N", "P", "K", "temperature",
                             "humidity", "ph", "rainfall"]
-            print(form_values)
             input_data = np.asarray([float(form_values[i].strip()) for i in column_names]).reshape(
                 1, -1
             )
-            print(form_values)
-            print(input_data)
             prediction_data = crop_prediction(input_data)
-            print(prediction_data)
             json_obj = json.dumps(prediction_data, default=convert)
             return json_obj
     except:
@@ -217,22 +213,18 @@ def predictfertilizer():
                          "đất đen": "Black",
                          "đất đỏ": "Red",
                          "đất sét": "Clayey"}
-            print(form_values)
 
             form_values["crop_type"] = crop_dict[form_values["crop_type"]]
             form_values["soil_type"] = soil_dict[form_values["soil_type"]]
-            print(form_values)
 
             for key in form_values:
                 form_values[key] = form_values[key].strip()
 
             form_values["crop_type"] = crop_label_name_dict[form_values["crop_type"]]
             form_values["soil_type"] = soil_label_dict[form_values["soil_type"]]
-            print(form_values)
             input_data = np.asarray([float(form_values[i]) for i in column_names]).reshape(
                 1, -1
             )
-            print(input_data)
             prediction_data = fertilizer_prediction(input_data)
             json_obj = json.dumps(prediction_data, default=convert)
             return json_obj
@@ -297,7 +289,6 @@ def upload_image():
         img_path = ""
         # for web
         form_values = request.form.to_dict()
-        print(form_values)
         for i, j in form_values.items():
             img_path = img_path + j
 
@@ -311,7 +302,7 @@ def upload_image():
             img_path = filename
 
         if (img_path != ""):
-            print(img_path)
+            print('Image received', img_path)
             img = cv2.imread('static/image/' + img_path)
             img = cv2.resize(img/255, (224, 224))
             img = np.reshape(img, [1, 224, 224, 3])
@@ -365,7 +356,7 @@ def upload_image():
             a = np.argmax(classes)
             # connect database
             client = MongoClient(
-                'mongodb+srv://admin:admin@cluster0.iey5z.mongodb.net/test'
+                'mongodb+srv://admin:admin@cluster0.iey5z.mongodb.net'
             )
             db = client['plant_disease']
             collection_all = db['name_plant']
@@ -421,7 +412,7 @@ def upload_image():
             if arr is not None:
                 for i in range(len(arr[0])):
                     rc += "🌱" + arr[0][i] + "\n" + "🚑 " + arr[1][i] + "\n"
-                print(len(arr[0]), len(arr[1]))
+                # print(len(arr[0]), len(arr[1]))
                 print(img_path, "Success")
                 # rc = Markup(rc)
                 rc = rc.split('\n')
@@ -440,4 +431,5 @@ def upload_image():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # app.run(debug=True)
+    app.run()
