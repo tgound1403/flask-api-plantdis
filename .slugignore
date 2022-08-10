@@ -8,3 +8,4 @@ efficientnetb2_flatten_1.h5
 /models
 /test
 /spec
+/venv
