@@ -356,7 +356,7 @@ def upload_image():
             a = np.argmax(classes)
             # connect database
             client = MongoClient(
-                'mongodb+srv://admin:admin@cluster0.iey5z.mongodb.net'
+                'mongodb+srv://admin:admin@cluster0.iey5z.mongodb.net/test'
             )
             db = client['plant_disease']
             collection_all = db['name_plant']
