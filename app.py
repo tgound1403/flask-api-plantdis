@@ -50,33 +50,33 @@ def after_request(response):
 
 # Loading all Crop Recommendation Models
 crop_xgb_pipeline = pickle.load(
-    open("crop_xgb_pipeline.pkl", "rb")
+    open("./models/crop_recommendation/crop_xgb_pipeline.pkl", "rb")
 )
 crop_rf_pipeline = pickle.load(
-    open("crop_rf_pipeline.pkl", "rb")
+    open("./models/crop_recommendation/crop_rf_pipeline.pkl", "rb")
 )
 crop_knn_pipeline = pickle.load(
-    open("knn_pipeline.pkl", "rb")
+    open("./models/crop_recommendation/knn_pipeline.pkl", "rb")
 )
 crop_label_dict = pickle.load(
-    open("label_dictionary.pkl", "rb")
+    open("./models/crop_recommendation/label_dictionary.pkl", "rb")
 )
 
 
 # Loading all Fertilizer Recommendation Models
 fertilizer_xgb_pipeline = pickle.load(
-    open("fert_xgb_pipeline.pkl", "rb")
+    open("./models/fertilizer_recommendation/fert_xgb_pipeline.pkl", "rb")
 )
 fertilizer_rf_pipeline = pickle.load(
-    open("fert_rf_pipeline.pkl", "rb"))
+    open("./models/fertilizer_recommendation/fert_rf_pipeline.pkl", "rb"))
 fertilizer_svm_pipeline = pickle.load(
-    open("svm_pipeline.pkl", "rb"))
+    open("./models/fertilizer_recommendation/svm_pipeline.pkl", "rb"))
 fertilizer_label_dict = pickle.load(
-    open("fertname_dict.pkl", "rb"))
+    open("./models/fertilizer_recommendation/fertname_dict.pkl", "rb"))
 soiltype_label_dict = pickle.load(
-    open("soiltype_dict.pkl", "rb"))
+    open("./models/fertilizer_recommendation/soiltype_dict.pkl", "rb"))
 croptype_label_dict = pickle.load(
-    open("croptype_dict.pkl", "rb"))
+    open("./models/fertilizer_recommendation/croptype_dict.pkl", "rb"))
 crop_label_name_dict = {}
 for crop_value in croptype_label_dict:
 
