@@ -9,3 +9,4 @@ efficientnetb2_flatten_1.h5
 /test
 /spec
 /venv
+/.idea
