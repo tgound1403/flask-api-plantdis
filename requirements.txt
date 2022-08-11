@@ -1,4 +1,5 @@
 tensorflow==1.14.0
+tensorflow-estimator==1.14.0
 keras_efficientnets==0.1.7
 numpy==1.16.0
 
