@@ -2,13 +2,13 @@ from flask import Flask, request, jsonify
 from flask import Markup
 from flask_cors import CORS, cross_origin
 from keras import backend as K
+from tensorflow.python.keras.backend import set_session
 
 import os
 import json
 import pickle
 import numpy as np
 from scipy import stats
-import keras
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics import accuracy_score
@@ -16,7 +16,6 @@ import string
 import pandas as pd
 import glob
 import scipy.sparse as sparse
-import keras
 import cv2
 from pymongo import MongoClient
 from pprint import pprint
@@ -31,6 +30,9 @@ import werkzeug
 app = Flask(__name__)
 
 cors = CORS(app)
+
+import warnings
+warnings.filterwarnings('ignore')
 
 @app.route("/")
 def home_view():
@@ -282,154 +284,174 @@ data = ['Bệnh vảy Táo',
         'Bệnh vàng lá xoăn trên Cà Chua']
 
 
+import tensorflow as tf
+from tensorflow.python.keras.backend import set_session
+from tensorflow import keras
+import keras as k
+
+sess = tf.compat.v1.Session(config=None)
+graph = tf.compat.v1.get_default_graph()
+set_session(sess)
+print('session running') 
+model = k.models.load_model('efficientnetb2.h5')
+saver = tf.compat.v1.train.Saver()
+inter_model = k.Model(model.input, model.get_layer(index=2).output)
+inter_model._make_predict_function()
+print('finish load model')
+
 @app.route('/predict_image', methods=['GET', 'POST'])
 def upload_image():
-    # try:
-    if request.method == 'POST':
-        img_path = ""
-        # for web
-        form_values = request.form.to_dict()
-        for i, j in form_values.items():
-            img_path = img_path + j
-
-        # for mobile
-        if (img_path == ""):
-            imagefile = request.files["image"]
-            # Getting file name of the image using werkzeug library
-            filename = werkzeug.utils.secure_filename(imagefile.filename)
-            # Saving the image in images Directory
-            imagefile.save("static/image/" + filename)
-            img_path = filename
-
-        if (img_path != ""):
-            print('Image received', img_path)
-            img = cv2.imread('static/image/' + img_path)
-            img = cv2.resize(img/255, (224, 224))
-            img = np.reshape(img, [1, 224, 224, 3])
-            K.clear_session()
-            model = keras.models.load_model('efficientnetb2.h5')
-
-            def get_predict(image):
-                img = cv2.imread(image)
-                img = cv2.resize(img/255, (224, 224))
-                img = np.reshape(img, [1, 224, 224, 3])
-                return model.predict(img)
-
-            def get_feature_img(image):
-                img = cv2.imread(image)
-                img = cv2.resize(img/255, (224, 224))
-                img = np.reshape(img, [1, 224, 224, 3])
-                inter_model = keras.Model(
-                    model.input, model.get_layer(index=2).output)
-                return inter_model.predict(img)[0]
-
-            def rc_disease_similarity(image, model):
-                feature_image_ = get_feature_img(image)
-                doc = name_all_clean[np.argmax(get_predict(image))]
-                if (doc not in name_healthy_clean):
-                    query_vector1 = tfidf_vectorizer.transform([doc])
-                    query_vector = sparse.hstack(
-                        (query_vector1, feature_image_))
-                    arr = max(cosine_similarity(query_vector, df_new))
-
-                    arr_sort = arr.copy()
-                    sort_indices = np.argsort(arr_sort)[::-1]
-                #     arr_sort[:] = arr_sort[sort_indices]
-                    out = [doc]
-                    treat = []
-                    i = 0
-                    while len(out) < 10:
-                        if name_all_clean[sort_indices[i]] not in out and name_all_clean[sort_indices[i]] not in name_healthy_clean:
-                            out.append(name_all_clean[sort_indices[i]])
-                            print(treatment[i])
-                            treat.append(treatment[i])
-                        i += 1
-                    return [out[1:], treat]
+    global model, inter_model, graph, sess
+    with sess.as_default():
+        with sess.graph.as_default():
+            print('running predict function')
+            # set_session(sess)
+            if request.method == 'POST':
+                img_path = ""
+                # for web
+                form_values = request.form.to_dict()
+                for i, j in form_values.items():
+                    img_path = img_path + j
+        
+                # for mobile
+                if (img_path == ""):
+                    imagefile = request.files["image"]
+                    # Getting file name of the image using werkzeug library
+                    filename = werkzeug.utils.secure_filename(imagefile.filename)
+                    # Saving the image in images Directory
+                    imagefile.save("static/image/" + filename)
+                    img_path = filename
+        
+                if (img_path != ""):
+                    print('Image received', img_path)
+                    img = cv2.imread('static/image/' + img_path)
+                    img = cv2.resize(img/255, (224, 224))
+                    img = np.reshape(img, [1, 224, 224, 3])
+                    
+                    
+        
+                    def get_predict(image):
+                        img = cv2.imread(image)
+                        img = cv2.resize(img/255, (224, 224))
+                        img = np.reshape(img, [1, 224, 224, 3])
+                        return model.predict(img)
+        
+                    def get_feature_img(image):
+                        img = cv2.imread(image)
+                        img = cv2.resize(img/255, (224, 224))
+                        img = np.reshape(img, [1, 224, 224, 3])
+                        return inter_model.predict(img)[0]
+        
+                    def rc_disease_similarity(image, model):
+                        feature_image_ = get_feature_img(image)
+                        doc = name_all_clean[np.argmax(get_predict(image))]
+                        if (doc not in name_healthy_clean):
+                            query_vector1 = tfidf_vectorizer.transform([doc])
+                            query_vector = sparse.hstack(
+                                (query_vector1, feature_image_))
+                            arr = max(cosine_similarity(query_vector, df_new))
+        
+                            arr_sort = arr.copy()
+                            sort_indices = np.argsort(arr_sort)[::-1]
+                            arr_sort[:] = arr_sort[sort_indices]
+                            out = [doc]
+                            treat = []
+                            i = 0
+                            while len(out) < 10:
+                                if name_all_clean[sort_indices[i]] not in out and name_all_clean[sort_indices[i]] not in name_healthy_clean:
+                                    out.append(name_all_clean[sort_indices[i]])
+                                    # print(treatment[i])
+                                    treat.append(treatment[i])
+                                i += 1
+                            return [out[1:], treat]
+                        else:
+                            return None
+        
+                    def clean_document(doc):
+                        text_clean = "".join(
+                            [i.lower() for i in doc if i not in string.punctuation])
+                        return text_clean
+                    classes=model.predict(img)
+                    a = np.argmax(classes)
+                    # connect database
+                    client = MongoClient(
+                        'mongodb+srv://admin:admin@cluster0.iey5z.mongodb.net'
+                    )
+                    db = client['plant_disease']
+                    collection_all = db['name_plant']
+                    collection_healthy = db['name_plant_healthy']
+                    collection_treatment = db['plant_dis']
+                    name_all = []
+                    name_healthy = []
+                    treatment = []
+                    symptom = []
+                    # ? what does it do?
+                    for i in collection_all.find():
+                        k = 0
+                        for j in collection_treatment.find():
+                            if i['name'] == j['label_vi']:
+                                k = 1
+                                symptom.append(j['symptom'])
+                                treatment.append(j['treatment'])
+                                break
+                        if k == 0:
+                            symptom.append('')
+                            treatment.append('')
+                        name_all.append(i['name'])
+                    for i in collection_healthy.find():
+                        name_healthy.append(i['name'])
+                    # tfdif
+                    name_all_clean = [clean_document(i) for i in name_all]
+                    name_healthy_clean = [clean_document(i) for i in name_healthy]
+        
+                    stopwords_list = ['bị', 'bởi', 'cả', 'các', 'cái', 'cần', 'càng', 'chỉ', 'chiếc', 'cho', 'chứ',
+                                      'chưa', 'có', 'có_thể', 'cứ', 'cùng', 'cũng', 'đã', 'đang', 'để', 'do', 'đó',
+                                      'được', 'gì', 'khi', 'không', 'là', 'lại', 'lên', 'lúc', 'mà', 'mỗi', 'này', 'nên',
+                                      'nếu', 'ngay', 'nhiều', 'như', 'nhưng', 'những', 'nơi', 'nữa', 'phải', 'qua', 'ra',
+                                      'rằng', 'rất', 'rồi', 'sau', 'sẽ', 'theo', 'thì', 'từ', 'từng', 'và', 'vẫn', 'vào', 'vậy', 'vì', 'việc', 'với']
+        
+                    tfidf_vectorizer = TfidfVectorizer(stop_words=stopwords_list)
+                    sparse_matrix = tfidf_vectorizer.fit_transform(name_all_clean)
+                    index = [i for i in range(1, len(name_all_clean)+1)]
+                    doc_term_matrix = sparse_matrix.todense()
+                    df = pd.DataFrame(doc_term_matrix,
+                                      columns=tfidf_vectorizer.get_feature_names(),
+                                      index=index)
+                    feature_img = np.array(np.genfromtxt(
+                        "img_feature.txt", delimiter=","))
+                    df_ = pd.DataFrame(feature_img,
+                                       columns=[i for i in range(12672)],
+                                       index=[i for i in range(1, 49)])
+                    df_new = pd.concat([df, df_], axis=1)
+        
+                    arr = rc_disease_similarity('static/image/' + img_path, inter_model)
+                    # print(collection_treatment.find()[a])
+                    rc = ""
+                    if arr is not None:
+                        for i in range(len(arr[0])):
+                            rc += "🌱 " + arr[0][i] + "\n" + "🚑 " + arr[1][i] + "\n"
+                        # print(len(arr[0]), len(arr[1]))
+                        print(img_path, "Success")
+                        # rc = Markup(rc)
+                        # print(rc)
+                        rc = rc.split('\n')
+                        return {
+                            'name': name_all[a],
+                            'symptom': symptom[a],
+                            'treatment': treatment[a],
+                            'rc': rc
+                        }
+                    else:
+                        print(img_path, "Healthy")
+                        return {'name': name_all[a], 'symptom': "", 'treatment': "", 'rc': ""}
                 else:
-                    return None
-
-            def clean_document(doc):
-                text_clean = "".join(
-                    [i.lower() for i in doc if i not in string.punctuation])
-                return text_clean
-            classes = model.predict(img)
-            a = np.argmax(classes)
-            # connect database
-            client = MongoClient(
-                'mongodb+srv://admin:admin@cluster0.iey5z.mongodb.net/test'
-            )
-            db = client['plant_disease']
-            collection_all = db['name_plant']
-            collection_healthy = db['name_plant_healthy']
-            collection_treatment = db['plant_dis']
-            name_all = []
-            name_healthy = []
-            treatment = []
-            symptom = []
-            for i in collection_all.find():
-                k = 0
-                for j in collection_treatment.find():
-                    if i['name'] == j['label_vi']:
-                        k = 1
-                        symptom.append(j['symptom'])
-                        treatment.append(j['treatment'])
-                        break
-                if k == 0:
-                    symptom.append('')
-                    treatment.append('')
-                name_all.append(i['name'])
-            for i in collection_healthy.find():
-                name_healthy.append(i['name'])
-            # tfdif
-            name_all_clean = [clean_document(i) for i in name_all]
-            name_healthy_clean = [clean_document(i) for i in name_healthy]
-
-            stopwords_list = ['bị', 'bởi', 'cả', 'các', 'cái', 'cần', 'càng', 'chỉ', 'chiếc', 'cho', 'chứ',
-                              'chưa', 'có', 'có_thể', 'cứ', 'cùng', 'cũng', 'đã', 'đang', 'để', 'do', 'đó',
-                              'được', 'gì', 'khi', 'không', 'là', 'lại', 'lên', 'lúc', 'mà', 'mỗi', 'này', 'nên',
-                              'nếu', 'ngay', 'nhiều', 'như', 'nhưng', 'những', 'nơi', 'nữa', 'phải', 'qua', 'ra',
-                              'rằng', 'rất', 'rồi', 'sau', 'sẽ', 'theo', 'thì', 'từ', 'từng', 'và', 'vẫn', 'vào', 'vậy', 'vì', 'việc', 'với']
-
-            tfidf_vectorizer = TfidfVectorizer(stop_words=stopwords_list)
-            sparse_matrix = tfidf_vectorizer.fit_transform(name_all_clean)
-            index = [i for i in range(1, len(name_all_clean)+1)]
-            doc_term_matrix = sparse_matrix.todense()
-            df = pd.DataFrame(doc_term_matrix,
-                              columns=tfidf_vectorizer.get_feature_names(),
-                              index=index)
-            feature_img = np.array(np.genfromtxt(
-                "img_feature.txt", delimiter=","))
-            df_ = pd.DataFrame(feature_img,
-                               columns=[i for i in range(12672)],
-                               index=[i for i in range(1, 49)])
-            df_new = pd.concat([df, df_], axis=1)
-
-            arr = rc_disease_similarity('static/image/' + img_path, model)
-            # print(collection_treatment.find()[a])
-            rc = ""
-            r1 = ""
-            r2 = ""
-            if arr is not None:
-                for i in range(len(arr[0])):
-                    rc += "🌱" + arr[0][i] + "\n" + "🚑 " + arr[1][i] + "\n"
-                # print(len(arr[0]), len(arr[1]))
-                print(img_path, "Success")
-                # rc = Markup(rc)
-                rc = rc.split('\n')
-                return {
-                    'name': name_all[a],
-                    'symptom': symptom[a],
-                    'treatment': treatment[a],
-                    'rc': rc
-                }
-            else:
-                print(img_path, "Healthy")
-                return {'name': name_all[a], 'symptom': "", 'treatment': "", 'rc': ""}
-        else:
-            print(img_path, "Failed")
-            return ""
-
-
+                    print(img_path, "Failed")
+                    return ""
+            K.clear_session()
+            sess.close()
+        
+        print(model.summary())
+        
 if __name__ == "__main__":
     # app.run(debug=True)
-    app.run()
+    app.run(host='0.0.0.0', port=8080)
