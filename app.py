@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify
 from flask import Markup
 from flask_cors import CORS, cross_origin
 from keras import backend as K
-from tensorflow.python.keras.backend import set_session
 
 import os
 import json
@@ -288,6 +287,8 @@ import tensorflow as tf
 from tensorflow.python.keras.backend import set_session
 from tensorflow import keras
 import keras as k
+
+print('keras version', k.__version__)
 
 sess = tf.compat.v1.Session(config=None)
 graph = tf.compat.v1.get_default_graph()
